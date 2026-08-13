@@ -1,0 +1,72 @@
+{
+  "name": "dsh-pet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A pet that lives in the DSH Web UI, changing poses as the agent runs.",
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "plugin",
+    "pet",
+    "web-ui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/opensetk/dsh-xiaohei.git"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json",
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "prepare": "node scripts/build.mjs",
+    "build:host": "esbuild src/index.ts --bundle --platform=node --format=esm --target=node20 --external:@deepseek-ai/* --outfile=lib/index.js",
+    "build:client": "esbuild src/client/index.ts --bundle --platform=browser --format=cjs --target=es2020 --jsx=automatic --loader:.gif=dataurl --loader:.png=dataurl --loader:.webp=dataurl --external:@deepseek-ai/* --external:react --external:react/jsx-runtime --banner:js='window.__ModuleLoader__.load({id:\"dsh-pet\",factory:(require)=>{var module={exports:{}};var exports=module.exports;Object.defineProperty(exports,Symbol.toStringTag,{value:\"Module\"});' --footer:js='return module.exports;}});' --outfile=lib/client.js",
+    "typecheck": "echo 'typecheck: needs @deepseek-ai types (run in harness monorepo)'; exit 0"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "*"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-runtime": "0.0.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.0.1-rc.1",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-client-runtime": "0.0.1-rc.1",
+    "@deepseek-ai/dsh-client-ui-slots": "0.0.1-rc.1",
+    "@types/react": "^18.2.0",
+    "react": "^18.2.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^5.5.4"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    }
+  }
+}

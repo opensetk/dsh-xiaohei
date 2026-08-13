@@ -1,0 +1,7 @@
+node_modules/
+.npm-cache/
+npm-debug.log*
+*.log
+.DS_Store
+
+# lib/ 有意提交：GitHub 安装直接复用预构建产物（免构建授权），prepare 脚本兜底。

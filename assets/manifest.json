@@ -1,0 +1,182 @@
+{
+  "heixiu.gif": {
+    "source": "嘿咻.gif",
+    "file": "assets/pet/heixiu.gif",
+    "width": 100,
+    "height": 107,
+    "frames": 28,
+    "durationsMs": [
+      100
+    ],
+    "loop": true,
+    "webp": "assets/pet/heixiu.webp",
+    "base": "assets/pet/heixiu-base.png",
+    "display": "assets/pet/heixiu-display.png",
+    "label": "嘿咻基础动作"
+  },
+  "main-play-heixiu.gif": {
+    "source": "玩嘿咻.gif",
+    "file": "assets/pet/main-play-heixiu.gif",
+    "width": 100,
+    "height": 100,
+    "frames": 8,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-play-heixiu.webp",
+    "base": null,
+    "display": null,
+    "label": "玩嘿咻"
+  },
+  "main-celebrate.gif": {
+    "source": "欢乐.gif",
+    "file": "assets/pet/main-celebrate.gif",
+    "width": 200,
+    "height": 200,
+    "frames": 10,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-celebrate.webp",
+    "base": null,
+    "display": null,
+    "label": "庆祝"
+  },
+  "main-wave.gif": {
+    "source": "打招呼.gif",
+    "file": "assets/pet/main-wave.gif",
+    "width": 200,
+    "height": 200,
+    "frames": 39,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-wave.webp",
+    "base": "assets/pet/main-base.png",
+    "display": null,
+    "label": "打招呼"
+  },
+  "main-run.gif": {
+    "source": "奔跑.gif",
+    "file": "assets/pet/main-run.gif",
+    "width": 220,
+    "height": 220,
+    "frames": 12,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-run.webp",
+    "base": null,
+    "display": null,
+    "label": "奔跑"
+  },
+  "main-wiggle.gif": {
+    "source": "蠕动.gif",
+    "file": "assets/pet/main-wiggle.gif",
+    "width": 240,
+    "height": 240,
+    "frames": 11,
+    "durationsMs": [
+      70
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-wiggle.webp",
+    "base": null,
+    "display": null,
+    "label": "蠕动"
+  },
+  "main-roll.gif": {
+    "source": "翻滚.gif",
+    "file": "assets/pet/main-roll.gif",
+    "width": 380,
+    "height": 200,
+    "frames": 12,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-roll.webp",
+    "base": null,
+    "display": null,
+    "label": "翻滚"
+  },
+  "main-eat.gif": {
+    "source": "吃鸡腿.gif",
+    "file": "assets/pet/main-eat.gif",
+    "width": 200,
+    "height": 200,
+    "frames": 22,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-eat.webp",
+    "base": null,
+    "display": null,
+    "label": "吃鸡腿"
+  },
+  "main-sneak-eat.gif": {
+    "source": "偷吃.gif",
+    "file": "assets/pet/main-sneak-eat.gif",
+    "width": 200,
+    "height": 200,
+    "frames": 28,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-sneak-eat.webp",
+    "base": null,
+    "display": null,
+    "label": "偷吃"
+  },
+  "main-full.gif": {
+    "source": "吃撑了.gif",
+    "file": "assets/pet/main-full.gif",
+    "width": 200,
+    "height": 200,
+    "frames": 24,
+    "durationsMs": [
+      80
+    ],
+    "loop": true,
+    "webp": "assets/pet/main-full.webp",
+    "base": null,
+    "display": null,
+    "label": "吃撑了"
+  },
+  "main-daze.png": {
+    "source": "发呆.jpg",
+    "file": "assets/pet/main-daze.png",
+    "width": 501,
+    "height": 500,
+    "frames": 1,
+    "durationsMs": [
+      100
+    ],
+    "loop": false,
+    "webp": null,
+    "base": null,
+    "display": null,
+    "label": "发呆"
+  },
+  "main-bored.png": {
+    "source": "无聊.jpg",
+    "file": "assets/pet/main-bored.png",
+    "width": 493,
+    "height": 500,
+    "frames": 1,
+    "durationsMs": [
+      100
+    ],
+    "loop": false,
+    "webp": null,
+    "base": null,
+    "display": null,
+    "label": "无聊"
+  }
+}

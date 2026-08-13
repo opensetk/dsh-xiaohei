@@ -1,0 +1,16 @@
+# dsh-pet —— 插入宿主插件到 web profile 的 patch 层。
+#
+# 用法：
+#   1) pnpm install（在 dsh-pet 目录）安装本包依赖并构建（见 README）。
+#   2) 把本文件的内容合并进你的 web profile 覆盖层：
+#        ~/.dsh/profiles/web/cordis.patch.yml
+#      或在启动时叠加：dsh web --patch ./cordis.patch.yml
+#
+# 说明：插件行按“包名”引用（dsh-pet），由 Node 模块解析在 profile 的
+# node_modules 里找到已安装/链接的代码。下面也给了按相对路径指向 lib 的写法。
+- insert:
+  - id: dsh-pet-host
+    # 方式 A（推荐，需先 pnpm install 把 dsh-pet 加进 profile 依赖）
+    name: dsh-pet
+    # 方式 B（免安装，直接指到构建产物绝对路径）
+    # name: '/Users/kun/projects/dshpet/dsh-pet/lib/index.js'
