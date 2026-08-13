@@ -26,19 +26,22 @@
 
 ## 它做什么
 
-浏览器侧由会话快照（`useSessions`）驱动，当前区分四种姿态：
+宿主侧逐事件折叠出**七种姿态**，浏览器经 HTTP 路由 `/pet-mood?sessionId=…` 轮询（800ms）：
 
-| 姿态 | 触发条件（当前会话快照） | 宠物表现 |
+| 姿态 | 触发事实（`session/event`） | 宠物表现 |
 |---|---|---|
 | 空闲 `idle` | 无活动 | 😴 陪着你~ |
-| 忙碌 `busy` | `running`（agent 正在跑：思考/输出/调工具） | 🏃 奔跑「冲鸭鸭！」 |
-| 思考 `thinking` | `pendingInteraction`（在等用户确认/提问） | 🍗 吃鸡腿「边想边吃…」 |
-| 完成 `done` | `completed`（刚完成） | 🎉 庆祝「耶！搞定~」 |
+| 忙碌 `busy` | `turn/start` | 👋 摇摆「忙忙哒」 |
+| 思考 `thinking` | `step/start` | 🍗 吃鸡腿「边想边吃…」 |
+| 输出 `streaming` | `assistant/chunk`（`text-delta` 非空文本） | 🏃 奔跑「冲鸭鸭！」 |
+| 干活 `tool` | `tool/call`（结果未回） | 🎮 玩嘿咻「和嘿咻玩会儿~」 |
+| 完成 `done` | `assistant/message` / `tool/result` 成功 | 🎉 庆祝「耶！搞定~」 |
+| 受挫 `error` | `turn/end` 失败（`reason.kind` 为 `error`/`aborted`）/ `tool/result` 带 `error` | 🤸 翻滚「呜哇…」 |
 
 鼠标点击宠物 → 随机播放一个互动动画（吃鸡腿 / 偷吃 / 玩嘿咻 / 蠕动 / 翻滚）+ 气泡文案。
 
-> 宿主侧还维护着一台**逐事件 7 态状态机**（`src/moods.ts`：思考/输出/干活/完成/失败，
-> 经 `session/event` 折叠，已实测工作），浏览器↔宿主的接通留作后续扩展。
+> 轮询不可用时回退到 `useSessions` 快照粗粒度推导（running/pendingInteraction/completed），
+> 保证宠物永远有表现。
 
 ---
 
@@ -50,7 +53,7 @@
 │    ctx.on('session/event', (session, event) => …)                 │
 │      ① 用 foldMood 折叠出姿态（事件载荷在 event.data）              │
 │      ② 存入 ctx.pet 服务（每会话 { mood, lastSeq }，按 seq 去重）   │
-│      ③ 暴露 petMood remote 服务（./typert 清单）                    │
+│      ③ HTTP 路由 GET /pet-mood?sessionId=… 返回姿态 JSON           │
 └───────────────────────────────────────────────────────────────────┘
                               │ dsh-client-modules 扫描 dsh.client
                               ▼
@@ -58,14 +61,13 @@
 │  dsh-pet client bundle (lib/client.js)                            │
 │    window.__ModuleLoader__.load({ id, factory }) 注册自身          │
 │    apply(ctx): ctx.slots.register({name:'shell.overlay',…}, Pet)  │
-│    PetAvatar: useSessions(快照) 读取当前会话的                      │
-│               running / pendingInteraction / completed            │
-│               → 切换 GIF/PNG 素材（四姿态）                         │
+│    PetAvatar: useSessions(快照) 定位当前会话，fetch 轮询           │
+│               /pet-mood（800ms）→ 七态动画；失败时回退快照推导     │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-**姿态来源**：浏览器半只用 `useSessions` 快照（槽位契约的标准件，零额外依赖，
-刷新即重建）；宿主半的 7 态状态机独立维护精确姿态，供服务端消费与回放。
+**姿态来源**：宿主半逐事件维护七态（服务端消费、回放、跨会话一致）；
+浏览器半轮询该路由渲染，轮询不可用时回退 `useSessions` 快照粗粒度推导。
 
 ---
 
