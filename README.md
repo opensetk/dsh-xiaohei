@@ -56,13 +56,15 @@
 │  dsh-pet client bundle (lib/client.js)                            │
 │    window.__ModuleLoader__.load({ id, factory }) 注册自身          │
 │    apply(ctx): ctx.slots.register({name:'shell.overlay',…}, Pet)  │
-│    PetAvatar: useSessions(快照) → 按 running/pendingInteraction/   │
-│               completed 推导姿态 → 切换 GIF/PNG 素材                │
+│    PetAvatar: useSessions(快照) 定位当前会话，经 remote 服务       │
+│               petMood.get({sessionId}) 轮询精确姿态（800ms）       │
+│               → 切换 GIF/PNG 素材；remote 不可用时回退快照推导     │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-**为什么有两套姿态来源？** 宿主半维护精确的逐事件状态机（供服务端消费与回放）；
-浏览器半直接读会话列表快照（`useSessions` 标准件），零 RPC、刷新即重建，两者互补。
+**姿态来源**：宿主半用 `foldMood` 维护**逐事件精确姿态**（思考/输出/干活/完成/失败），
+并经 Typert remote 服务 `petMood.get` 暴露给浏览器；浏览器半轮询该服务渲染，
+remote 未就绪时回退到 `useSessions` 快照的粗粒度推导（保证宠物永远有表现）。
 
 ---
 
@@ -83,6 +85,17 @@ dsh-pet/
         ├── Pet.tsx         # React 宠物组件（角落形象 + 姿态动画 + 点击反馈）
         └── assets.ts       # 素材引用（全部 data URL 内联）
 ```
+
+---
+
+## 素材来源
+
+宠物 GIF/PNG 素材（`assets/`，构建时内联进 bundle）来自以下公开资源，仅供学习交流使用：
+
+- <https://www.baidu.com/link?url=1LbFrMD32vPsyvYDbZ_G9MnR7FsdpOfvLzbAEhbtMtPxaLf2HVY5Ok9gJQTwswrl&wd=&eqid=958f2f820009c39d000000056a7de487>
+- <https://www.acfun.cn/a/ac14920751>
+
+若原作者不希望被使用，请联系移除。
 
 ---
 

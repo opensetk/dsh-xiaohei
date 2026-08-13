@@ -10,6 +10,7 @@
  * 注意：apply 里通过 ctx 做的所有注册都是副作用，插件卸载时自动清理。
  */
 import { Service, type Context } from '@deepseek-ai/cordis'
+import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
 import { foldMood, type PetEventLike, type PetMood } from './moods.js'
 
 declare module '@deepseek-ai/cordis' {
@@ -63,11 +64,31 @@ export class PetRegistry extends Service {
 
 export const name = 'dsh-pet'
 
+/**
+ * 把每会话宠物姿态暴露为 host remote 服务（Typert Gateway 自动发现）。
+ * 浏览器侧客户端经 `ctx.remote.petMood.get({ sessionId })` 调用，
+ * 返回 `{ ok: true, value: { mood, lastSeq } }`（失败为 `{ ok: false, error }`）。
+ */
+export class PetMoodGateway extends TypertRemoteService {
+  static inject = ['pet']
+
+  constructor(ctx: Context) {
+    super(ctx, 'petMood')
+  }
+
+  @Remote('get')
+  get(args: { sessionId: string }): SessionPetState {
+    return this.ctx.pet.get(String(args?.sessionId ?? ''))
+  }
+}
+
 // 本插件自己注册 ctx.pet 服务并监听全局 session/event，因此不强制注入外部服务。
 // 如需调用会话 API（例如 ctx.sessions.surface / followup）再注入 'sessions'。
 export function apply(ctx: Context) {
   // 注册服务（其生命周期绑定在本插件 fiber 上，卸载自动清理）。
   ctx.plugin(PetRegistry)
+  // 注册 remote 服务：客户端可查询任意会话的精确姿态。
+  ctx.plugin(PetMoodGateway)
 
   // 监听持久化会话事件流，持续折叠姿态。
   // dsh-session 在根 ctx 上广播追加的会话事实，参数为 (session, event)：
