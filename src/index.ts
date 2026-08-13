@@ -87,7 +87,7 @@ export class PetMoodGateway extends TypertRemoteService {
 export function apply(ctx: Context) {
   // 注册服务（其生命周期绑定在本插件 fiber 上，卸载自动清理）。
   ctx.plugin(PetRegistry)
-  // 注册 remote 服务：客户端可查询任意会话的精确姿态。
+  // 注册 remote 服务（host 侧目录/网关用；客户端不用它，走下面的 HTTP 路由）。
   ctx.plugin(PetMoodGateway)
 
   // 监听持久化会话事件流，持续折叠姿态。
@@ -106,4 +106,29 @@ export function apply(ctx: Context) {
     const seq = (event as { seq?: number }).seq ?? -1
     pet.fold(sessionId, seq, event as unknown as PetEventLike)
   })
+
+  // 姿态查询 HTTP 路由：浏览器侧直接轮询（绕开 Typert remote 客户端通道）。
+  // GET /pet-mood?sessionId=<id> → {"sessionId":"…","mood":"streaming","lastSeq":123}
+  const webServer = ctx.get('webServer') as
+    | { register(route: { kind: 'prefix'; path: string; handler: (req: { url?: string }, res: { writeHead(code: number, headers?: Record<string, string>): void; end(body: string): void }) => void }): () => void }
+    | undefined
+  if (webServer) {
+    webServer.register({
+      kind: 'prefix',
+      path: '/pet-mood',
+      handler: (req, res) => {
+        try {
+          const url = new URL(req.url ?? '/', 'http://x')
+          const sessionId = url.searchParams.get('sessionId') ?? ''
+          const pet = ctx.get('pet') as PetRegistry | undefined
+          const state = pet?.get(sessionId) ?? { mood: 'idle', lastSeq: -1 }
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
+          res.end(JSON.stringify({ sessionId, mood: state.mood, lastSeq: state.lastSeq }))
+        } catch (error) {
+          res.writeHead(500)
+          res.end(String(error))
+        }
+      },
+    })
+  }
 }
