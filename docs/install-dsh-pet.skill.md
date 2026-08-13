@@ -6,6 +6,9 @@ whenToUse: 用户要求安装 dsh-pet / 把宠物接入 DSH Web UI / 宠物不�
 
 # 安装 dsh-pet（Agent 执行指南）
 
+> 本文件即安装教程本体，位于仓库 `docs/install-dsh-pet.skill.md`；
+> 网络路径（raw）：`https://raw.githubusercontent.com/opensetk/dsh-xiaohei/main/docs/install-dsh-pet.skill.md`
+
 目标：让 dsh-pet 的**宿主半**（Node 侧姿态状态机）与**浏览器半**（右下角宠物形象）
 都在 DSH Web UI 生效。本 skill 面向执行安装的 agent，按步骤逐条执行并验证。
 
