@@ -94,9 +94,16 @@ export function apply(ctx: Context) {
   // dsh-session 在根 ctx 上广播追加的会话事实，参数为 (session, event)：
   //   session —— 事件源的 Session 实例（取其 .id）；
   //   event   —— { type, seq, time, data }，业务载荷在 event.data。
+  //
+  // 注意：不能用 `ctx.pet` 属性访问——Cordis 的注入守卫要求先声明 inject，
+  // 本插件没有（服务是自己注册的），属性访问会抛
+  // "cannot get property \"pet\" without inject" 并被事件系统静默吞掉。
+  // 用 ctx.get('pet') 方法调用（事件到达时服务必已激活，且方法调用不受守卫限制）。
   ctx.on('session/event', (session, event) => {
+    const pet = ctx.get('pet') as PetRegistry | undefined
+    if (!pet) return
     const sessionId = (session as { id?: string }).id ?? String(session)
     const seq = (event as { seq?: number }).seq ?? -1
-    ctx.pet.fold(sessionId, seq, event as unknown as PetEventLike)
+    pet.fold(sessionId, seq, event as unknown as PetEventLike)
   })
 }
