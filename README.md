@@ -154,6 +154,31 @@ dsh plugin --profile web add github:opensetk/dsh-xiaohei#dsh-plugin
 
 ---
 
+## 给 Agent 的安装指南（Skill）
+
+仓库内置一个 **DSH Skill**，agent 读取后即可按步骤完成整个安装流程
+（构建 → 声明依赖 → 插入宿主行 → 重启 → 逐项验证 → 常见问题 → 回滚）：
+
+| 项 | 值 |
+|---|---|
+| Skill 名称 | `install-dsh-pet` |
+| 文件 | [`.dsh/skills/install-dsh-pet/SKILL.md`](.dsh/skills/install-dsh-pet/SKILL.md) |
+| 自动发现 | 任何 agent 在本仓库检出中工作时，DSH 会扫描 `<项目根>/.dsh/skills/`，该 skill 自动出现在其 skill 目录中，用 `skill` 工具按名加载 |
+
+给 agent 的提示语示例：
+
+> 请加载 `install-dsh-pet` skill，并按其中的步骤把宠物插件安装进我的 DSH web profile。
+
+若希望**任何目录**下的会话都能使用该 skill（不限于本仓库检出），复制一份到用户级
+skill 目录即可：
+
+```sh
+mkdir -p ~/.dsh/skills
+cp -R .dsh/skills/install-dsh-pet ~/.dsh/skills/
+```
+
+---
+
 ## 工作原理（关键点）
 
 ### 宿主侧
