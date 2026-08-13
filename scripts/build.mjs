@@ -54,12 +54,22 @@ console.log('# 使用 DSH 模块源:', dsh)
 const nm = path.join(root, 'node_modules')
 const ai = path.join(nm, '@deepseek-ai')
 mkdirSync(ai, { recursive: true })
-for (const pkg of ['dsh-client-runtime', 'dsh-client-ui-slots', 'cordis']) {
+// 注意：宿主 bundle（lib/index.js）对这些包保持 external，运行时由 Node 从
+// dsh-pet/node_modules 向上解析 —— 这里必须为**所有被宿主源码 import 的
+// @deepseek-ai 包**建链接，否则加载宿主插件会报
+// "Cannot find package '@deepseek-ai/xxx' imported from .../dsh-pet/lib/index.js"。
+for (const pkg of ['dsh-client-runtime', 'dsh-client-ui-slots', 'cordis', 'dsh-typert-protocol', 'dsh-typert-registry']) {
   const target = path.join(dsh, '@deepseek-ai', pkg)
   const link = path.join(ai, pkg)
   if (!existsSync(link)) symlinkSync(target, link, 'junction')
 }
 for (const pkg of ['react', 'react-dom', 'scheduler']) {
+  const src = path.join(dsh, pkg)
+  const link = path.join(nm, pkg)
+  if (existsSync(src) && !existsSync(link)) symlinkSync(src, link, 'junction')
+}
+// typert.host.js（./typert 导出）external 了 zod，运行时同样需要可解析。
+for (const pkg of ['zod']) {
   const src = path.join(dsh, pkg)
   const link = path.join(nm, pkg)
   if (existsSync(src) && !existsSync(link)) symlinkSync(src, link, 'junction')
@@ -73,6 +83,8 @@ const run = (label, cmd) => {
 
 run('构建宿主插件 → lib/index.js',
   `npx --yes esbuild@0.22 src/index.ts --bundle --platform=node --format=esm --target=node20 --external:@deepseek-ai/* --outfile=lib/index.js`)
+run('构建 TYPERT host manifest → lib/typert.host.js',
+  `npx --yes esbuild@0.22 src/typert.host.ts --bundle --platform=node --format=esm --target=node20 --external:zod --external:@deepseek-ai/* --outfile=lib/typert.host.js`)
 // 浏览器插件必须以官方 client bundle 格式输出：经典 script 加载后立即调用
 // `window.__ModuleLoader__.load({ id, factory })` 注册自身（见 dsh-client-modules
 // 的 arrive()/materialize()）；factory 是 CJS 形态，依赖经 loader 的 require
