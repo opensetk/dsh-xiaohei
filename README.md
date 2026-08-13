@@ -10,6 +10,20 @@
 
 ---
 
+## 效果预览
+
+<p align="center">
+  <img src="docs/screenshots/QQ_1786634277517.png" alt="dsh-pet 效果截图 1" width="70%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/QQ_1786634322842.png" alt="dsh-pet 效果截图 2" width="70%">
+</p>
+<p align="center">
+  <img src="docs/screenshots/QQ_1786634371357.png" alt="dsh-pet 效果截图 3" width="70%">
+</p>
+
+---
+
 ## 它做什么
 
 | 姿态 | 触发事实（`session/event`） | 宠物表现 |
