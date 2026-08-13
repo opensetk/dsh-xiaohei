@@ -26,17 +26,19 @@
 
 ## 它做什么
 
-| 姿态 | 触发事实（`session/event`） | 宠物表现 |
+浏览器侧由会话快照（`useSessions`）驱动，当前区分四种姿态：
+
+| 姿态 | 触发条件（当前会话快照） | 宠物表现 |
 |---|---|---|
-| 空闲 `idle` | 无活动 | 😴 呼吸 |
-| 忙碌 `busy` | `turn/start` | ⏳ 脉冲 |
-| 思考 `thinking` | `step/start` | 🤔 眨眼 |
-| 输出 `streaming` | `assistant/chunk`（`text-delta` 非空文本） | 💬 摇摆 |
-| 干活 `tool` | `tool/call`（结果未回） | 🛠️ 弹跳 |
-| 完成 `done` | `assistant/message` / `tool/result` 成功 | 🎉 庆祝 |
-| 受挫 `error` | `turn/end` 失败（`reason.kind` 为 `error`/`aborted`）/ `tool/result` 带 `error` | 💥 发抖 |
+| 空闲 `idle` | 无活动 | 😴 陪着你~ |
+| 忙碌 `busy` | `running`（agent 正在跑：思考/输出/调工具） | 🏃 奔跑「冲鸭鸭！」 |
+| 思考 `thinking` | `pendingInteraction`（在等用户确认/提问） | 🍗 吃鸡腿「边想边吃…」 |
+| 完成 `done` | `completed`（刚完成） | 🎉 庆祝「耶！搞定~」 |
 
 鼠标点击宠物 → 随机播放一个互动动画（吃鸡腿 / 偷吃 / 玩嘿咻 / 蠕动 / 翻滚）+ 气泡文案。
+
+> 宿主侧还维护着一台**逐事件 7 态状态机**（`src/moods.ts`：思考/输出/干活/完成/失败，
+> 经 `session/event` 折叠，已实测工作），浏览器↔宿主的接通留作后续扩展。
 
 ---
 
@@ -48,7 +50,7 @@
 │    ctx.on('session/event', (session, event) => …)                 │
 │      ① 用 foldMood 折叠出姿态（事件载荷在 event.data）              │
 │      ② 存入 ctx.pet 服务（每会话 { mood, lastSeq }，按 seq 去重）   │
-│      ③ 姿态变化时 emit 'pet/mood-change'                            │
+│      ③ 暴露 petMood remote 服务（./typert 清单）                    │
 └───────────────────────────────────────────────────────────────────┘
                               │ dsh-client-modules 扫描 dsh.client
                               ▼
@@ -56,15 +58,14 @@
 │  dsh-pet client bundle (lib/client.js)                            │
 │    window.__ModuleLoader__.load({ id, factory }) 注册自身          │
 │    apply(ctx): ctx.slots.register({name:'shell.overlay',…}, Pet)  │
-│    PetAvatar: useSessions(快照) 定位当前会话，经 remote 服务       │
-│               petMood.get({sessionId}) 轮询精确姿态（800ms）       │
-│               → 切换 GIF/PNG 素材；remote 不可用时回退快照推导     │
+│    PetAvatar: useSessions(快照) 读取当前会话的                      │
+│               running / pendingInteraction / completed            │
+│               → 切换 GIF/PNG 素材（四姿态）                         │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-**姿态来源**：宿主半用 `foldMood` 维护**逐事件精确姿态**（思考/输出/干活/完成/失败），
-并经 Typert remote 服务 `petMood.get` 暴露给浏览器；浏览器半轮询该服务渲染，
-remote 未就绪时回退到 `useSessions` 快照的粗粒度推导（保证宠物永远有表现）。
+**姿态来源**：浏览器半只用 `useSessions` 快照（槽位契约的标准件，零额外依赖，
+刷新即重建）；宿主半的 7 态状态机独立维护精确姿态，供服务端消费与回放。
 
 ---
 
@@ -187,9 +188,14 @@ dsh plugin --profile web add github:opensetk/dsh-xiaohei#dsh-plugin
 ctx.on('session/event', (session, event) => {
   // 注意：第一参是 Session 实例（取 .id），不是字符串！
   // event = { type, seq, time, data }，业务字段全部在 event.data 里
-  ctx.pet.fold(session.id, event.seq, event)
+  const pet = ctx.get('pet')   // ← 必须 ctx.get('pet')，不能 ctx.pet！
+  pet?.fold(session.id, event.seq, event)
 })
 ```
+
+> **坑**：Cordis 里 `ctx.<服务>` **属性访问**必须先声明 `inject`，否则抛
+> `cannot get property "…" without inject`，且该错误会被事件系统静默吞掉
+> （监听器看着"不生效"）。用 `ctx.get('…')` 方法调用即可。
 
 ### 浏览器侧
 
@@ -199,7 +205,12 @@ ctx.on('session/event', (session, event) => {
 `window.__ModuleLoader__.load({ id, factory })` 注册自己（`factory` 是 CJS 形态，
 依赖经 loader 的 `require` 解析——平台 seed 含 `react`、`react/jsx-runtime`、
 `@deepseek-ai/cordis` 等）。注册后 `apply(ctx)` 把组件挂进 `shell.overlay`
-（list 槽位），组件用框架注入的 `useSessions` 标准件订阅会话快照。
+（list 槽位），组件用框架注入的 `useSessions` 标准件订阅会话快照：
+
+```ts
+const snap = useSessions((s) => s)   // 选择器返回快照引用，随 store 更新变化
+// 按 snap.current + snap.byId[current] 的 running/pendingInteraction/completed 推导姿态
+```
 
 ---
 
@@ -209,9 +220,9 @@ ctx.on('session/event', (session, event) => {
 |---|---|---|
 | 页面完全没有宠物 | profile 未声明依赖 / 未插入宿主行 / 服务未重启 | 按"快速开始"三步走；检查 `__DSH_BOOT__` 清单 |
 | `failed to import loader entry … loaded without registering "dsh-pet" via __ModuleLoader__.load` | `lib/client.js` 不是 `__ModuleLoader__.load` 注册格式（例如被普通 ESM 构建覆盖） | 重新执行 `node scripts/build.mjs`，确认产物首行为 `window.__ModuleLoader__.load({id:"dsh-pet",…` |
-| 宠物永远是 idle，不动 | `useSessions` 选择器返回常量（旧版代码 `() => null`） | 选择器须返回快照或随 store 变化的值：`useSessions((s) => s)` |
+| 宠物不动/不随会话变化 | `useSessions` 选择器返回常量；或页面缓存了旧 bundle | 选择器须返回快照：`useSessions((s) => s)`；浏览器强制刷新（Cmd+Shift+R） |
 | 宿主插件 FAILED | 版本 API 不匹配等 | 看启动日志；确认 DSH 版本 |
-| 状态机不切 error 姿态 | 误判 `turn/end` 的 reason | reason 是对象：`data.reason.kind === 'error' \| 'aborted'` |
+| 宿主折叠"不生效"却无报错 | 监听器里用了 `ctx.pet` 属性访问（inject 守卫静默吞错） | 改用 `ctx.get('pet')` |
 
 ---
 
